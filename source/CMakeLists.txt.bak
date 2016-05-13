@@ -1,0 +1,36 @@
+cmake_minimum_required (VERSION 3.0)
+project (LBTE3DDGNodal)
+get_filename_component(CMAKECUSTOMEMODULEDIR $ENV{USERPROFILE}/OneDrive/Template/cmake_modules ABSOLUTE)
+set(CMAKE_MODULE_PATH "${CMAKECUSTOMEMODULEDIR}")
+
+#add MKL libs
+find_package(MKL)
+include_directories(${MKL_INCLUDE_DIR})
+set(LIBS ${MKL_LIBRARIES} ${LIBS})
+
+#add Matlab libs
+find_package(Matlab REQUIRED COMPONENTS MX_LIBRARY MAT_LIBRARY ENG_LIBRARY)
+include_directories(${Matlab_INCLUDE_DIRS})
+set(LIBS ${Matlab_LIBRARIES} ${LIBS})
+
+#add Boost libs
+find_package(Boost)
+include_directories(${Boost_INCLUDE_DIRS})
+set(LIBS ${Boost_LIBRARIES} ${LIBS})
+link_directories(${Boost_LIBRARY_DIRS})
+
+#add_compile_options(/DMKL_ILP64)
+#add_compile_options(/DMKL_INT=int)
+add_compile_options(/Qopenmp)
+
+find_library(IMATLABC_LIB IMATLABC.lib ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib)
+set(SOURCEFILES)
+set(HEADERFILES)
+add_subdirectory(include)
+add_subdirectory(source)
+message(STATUS "Headers: ${HEADERFILES}")
+message(STATUS "Sources: ${SOURCEFILES}")
+add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${SOURCEFILES} ${HEADERFILES})
+target_link_libraries(${PROJECT_NAME} ${MKL_LIBRARIES} ${Matlab_LIBRARIES} ${IMATLABC_LIB})
