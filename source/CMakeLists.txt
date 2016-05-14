@@ -22,7 +22,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 
 include_directories(${XLIB_PATH}//include)
 find_library(XLib_LIB xlib ${XLIB_PATH}//lib)
-set(LIBS ${XLib_LIB})
+set(LIBS ${XLib_LIB} ${LIBS})
 
 #================================================#
 
@@ -31,6 +31,7 @@ set(LIBS ${XLib_LIB})
 #add_compile_options(/DMKL_ILP64)
 #add_compile_options(/DMKL_INT=int)
 add_compile_options(/Qopenmp)
+#add_compile_options(/DMKL_DIRECT_CALL)
 add_compile_options(/DUSE_DOUBLE_PRECISION)
 #================================================#
 

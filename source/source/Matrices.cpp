@@ -364,7 +364,7 @@ void DG3DNodal::SystemMatrixStandard3D::calculateMatrices()
 		matrix_t lb_ref(total_basis, total_basis, lb.at(index_order));
 		matrix_t lf_ref(total_basis, total_basis, lf.at(index_order));
 		matrix_t ll_ref(total_basis, total_basis, ll.at(index_order));
-		matrix_t lr_ref(total_basis, total_basis, lr .at(index_order));
+		matrix_t lr_ref(total_basis, total_basis, lr.at(index_order));
 		matrix_t lu_ref(total_basis, total_basis, lu.at(index_order));
 		matrix_t lt_ref(total_basis, total_basis, lt.at(index_order));
 
