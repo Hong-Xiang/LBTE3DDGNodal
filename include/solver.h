@@ -67,11 +67,15 @@ namespace dgn {
 		num_p source_p_;
 		num_p boundary_p_;
 		num_p solution_p_;
+		num_p boundary_mask_p_;
+
 		vector_t source_;
 		vector_t boundary_;
 		vector_t solution_;
+		vector_t boundary_mask_;
 		const system_matrix_angle* s_;
 		const mesh* m_;
+
 	};
 
 }

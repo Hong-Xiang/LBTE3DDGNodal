@@ -281,30 +281,39 @@ int main() {
 	// 
 
 	std::cout << "Solver Start." << std::endl;
-	
+	size_t testid = 3;
 	//std::ofstream fout("result.txt");
+	std::cout << "input test case id (default= " << testid << ")" << std::endl;
+	std::cin >> testid;
 
 	//size_t nx = 15, ny = 15, nz = 15;
-	size_t nx = 15, ny = 15, nz = 15;
+	size_t nx = 5, ny = 1, nz = 1;
 	std::cout << "intput nx, ny and nz:" << std::endl;
 	std::cin >> nx >> ny >> nz;
+	size_t np = 2;
+	std::cout << "input np" << std::endl;
+	std::cin >> np;
 	dgn::num_t h = 2.0/nx, mu = 0.0, xi = 0.0, eta = 0.0, sigma = 1.0;
+	//std::cout << "input h (default= " << h << ")" << std::endl;
+	//std::cin >> h;
 	std::srand(std::clock());
 	mu = (dgn::num_t)rand() / RAND_MAX;
 	xi = (dgn::num_t)rand() / RAND_MAX;
 	eta = (dgn::num_t)rand() / RAND_MAX;
 	mu = 2 * mu - 1; xi = 2 * xi - 1; eta = 2 * eta - 1;
 	//mu = 0.7; xi = 0.5; eta = -0.3;
-	//mu = 0.0; xi = 0.0; eta = -1.0;
+	//mu = -1.0; xi = -1.0; eta = -1.0;
+	mu = 1.0; xi = 0; eta = 0;
 	dgn::num_t r = mu*mu + xi*xi + eta*eta;
 	r = std::pow(r, 0.5);
 	mu = mu / r; xi = xi / r; eta = eta / r;
+	std::cout << "input mu, xi and eta:" << eta << std::endl;	
 	std::cout << "mu= " << mu << "\txi= " << xi << "\teta= " << eta << std::endl;
-	size_t np = 2;
+	
 
 	dgn::system_matrix_angle sma(h, np, mu, xi, eta, sigma);
 		
-	
+	std::cout << "system matrix generate start." << std::endl;
 	dgn::mesh m(nx, ny, nz, h, 0, 0, 0);
 	std::cout << "mesh generate start." << std::endl;
 	m.generate();
@@ -323,7 +332,7 @@ int main() {
 	std::cout << "source boundary generated." << std::endl;
 	//fout << sma;
 
-	size_t testid = 4;
+
 
 	//fout << "source " << std::endl;
 	dgn::analytical_solution::set_test_id(testid);

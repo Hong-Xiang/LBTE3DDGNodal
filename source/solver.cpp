@@ -160,6 +160,21 @@ dgn::solver::solver(const system_matrix_angle& s, const mesh& m) : s_(&s), m_(&m
 	source_.bind(m.memory_element_total(s.basis_element()), source_p_);
 	boundary_.bind(m.memory_surface_total(s.basis_surface()), boundary_p_);
 	solution_.bind(m.memory_element_total(s.basis_element()), solution_p_);
+
+	//boundary mask	
+	boundary_mask_p_ = xlib::mkl_ext::xcalloc<num_t>(m.memory_surface_total(s.basis_surface()));
+	boundary_mask_.bind(m.memory_surface_total(s.basis_surface()), boundary_mask_p_);
+
+	std::vector<bool> bdm = m_->boundary_mark(s_->basis_surface());
+	if (bdm.size() != boundary_mask_.size())
+		throw(invalid_dimension());
+	for (size_t i = 0; i < boundary_.size(); i++)
+	{
+		if (bdm.at(i))
+			boundary_mask_(i) = 0.0;
+		else
+			boundary_mask_(i) = 1.0;
+	}
 }
 
 dgn::solver::~solver()
@@ -170,6 +185,8 @@ dgn::solver::~solver()
 		mkl_free(solution_p_);
 	if (boundary_p_ != nullptr)
 		mkl_free(boundary_p_);
+	if (boundary_mask_p_ != nullptr)
+		mkl_free(boundary_mask_p_);
 }
 
 void dgn::solver::solve()
@@ -199,12 +216,14 @@ void dgn::solver::solve()
 	vector_t bd_xpre, bd_xinc;
 	vector_t bd_ypre, bd_yinc;
 	vector_t bd_zpre, bd_zinc;
-	
+	vector_t bdmask_xinc, bdmask_yinc, bdmask_zinc;
 	size_t ib_xpre, ib_xinc, ib_ypre, ib_yinc, ib_zpre, ib_zinc;
 	interface_direction d_xpre, d_xinc, d_ypre, d_yinc, d_zpre, d_zinc;
 	num_p bp = xlib::mkl_ext::xcalloc<num_t>(n_node_element);
 	vector_t b(s_->basis_element(), bp);
 
+	num_p bdtmpp = xlib::mkl_ext::xcalloc<num_t>(n_node_surface);
+	vector_t bdtmp(n_node_surface, bdtmpp);
 
 	quadrant quad = utilities::quadrant_of_angle(mu, xi, eta);
 	bool xincf = utilities::quadrant_x_positive_flag(quad);
@@ -241,6 +260,11 @@ void dgn::solver::solve()
 		bd_yinc.bind(n_node_surface, boundary_p_ + memory_surface.at(ib_yinc));
 		bd_zpre.bind(n_node_surface, boundary_p_ + memory_surface.at(ib_zpre));
 		bd_zinc.bind(n_node_surface, boundary_p_ + memory_surface.at(ib_zinc));
+
+		bdmask_xinc.bind(n_node_surface, boundary_mask_p_ + memory_surface.at(ib_xinc));
+		bdmask_yinc.bind(n_node_surface, boundary_mask_p_ + memory_surface.at(ib_yinc));
+		bdmask_zinc.bind(n_node_surface, boundary_mask_p_ + memory_surface.at(ib_zinc));
+
 		sor_e.bind(n_node_element, source_.ptr() + memory_element.at(i));
 		s_e.bind(n_node_element, solution_p_ + memory_element.at(i));
 		
@@ -267,12 +291,30 @@ void dgn::solver::solve()
 			s_e.gbtrs('N', s_->system_matrixlu());
 			//s_e.gemx(CblasNoTrans, 1.0, s_->system_matrixiv(), b, 0.0);
 		// Update boundary
-			bd_xinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_xinc), s_e, 0.0);
-			bd_yinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_yinc), s_e, 0.0);
-			bd_zinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_zinc), s_e, 0.0);
+			bdtmp.gemx(CblasTrans, 1.0, s_->flux_matrix(d_xinc), s_e, 0.0);		
+			bdtmp.point_mul(bdtmp, bdmask_xinc);
+
+			
+			bd_xinc.add(bdtmp);
+			
+
+			bdtmp.gemx(CblasTrans, 1.0, s_->flux_matrix(d_yinc), s_e, 0.0);
+			bdtmp.point_mul(bdtmp, bdmask_yinc);
+			
+			bd_yinc.add(bdtmp);
+			
+			bdtmp.gemx(CblasTrans, 1.0, s_->flux_matrix(d_zinc), s_e, 0.0);
+			bdtmp.point_mul(bdtmp, bdmask_zinc);
+			bd_zinc.add(bdtmp);
+
+			//bd_xinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_xinc), s_e, 1.0);
+			//bd_yinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_yinc), s_e, 1.0);
+			//bd_zinc.gemx(CblasTrans, 1.0, s_->flux_matrix(d_zinc), s_e, 1.0);
 	}
 	if (bp != nullptr)
 		mkl_free(bp);
+	if (bdtmpp != nullptr)
+		mkl_free(bdtmpp);
 }
 
 #include "globals.h"
@@ -290,7 +332,9 @@ void dgn::solver::solve_test(size_t id)
 		if (bdm.at(i) == false)
 			boundary_(i) = 0.0;
 	}
+
 	solve();
+
 }
 
 void dgn::solver::solve_analytical(size_t id)
