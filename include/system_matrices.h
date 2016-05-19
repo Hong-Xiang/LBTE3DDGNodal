@@ -163,8 +163,9 @@ namespace dgn {
 	public:
 		system_matrix_angle(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma);
 		const matrix_t system_matrix() const { return sysm_; }
-		const matrix_t system_matrixlu() const { return sysmlu_; }
+		const xlib::mkl_ext::matrix_lu<num_t> system_matrixlu() const { return sysmlu_; }
 		const matrix_t system_matrixiv() const { return sysmiv_; }
+		const matrix_t mass_matrix() const { return massm_; }
 		const matrix_t lift_matrix(interface_direction dir) const {
 			return lift_matrix_.at(static_cast<size_t>(dir));
 		}
@@ -174,11 +175,21 @@ namespace dgn {
 		const vector_t x() const { return matrices_.x(); }
 		const vector_t y() const { return matrices_.y(); }
 		const vector_t z() const { return matrices_.z(); }
+
+		const vector_t xs() const { return surface_matrices_.x(); }
+		const vector_t ys() const { return surface_matrices_.y(); }
+
+		num_t mu() const { return mu_; }
+		num_t xi() const { return xi_; }
+		num_t eta() const { return eta_; }
+		num_t sigma() const { return sigma_; }
+
 		size_t basis_element() const { return matrices_.basis_total(); }
 		size_t basis_surface() const { return matrices_.basis_lower_dim_total(); }
 		~system_matrix_angle();
 	private:
 		matrices3d matrices_;
+		matrices2d surface_matrices_;
 		num_t h_, mu_, xi_, eta_, sigma_;
 		size_t np_;
 		num_p sysmp_;
@@ -190,10 +201,12 @@ namespace dgn {
 
 		num_p sysmivp_;
 		matrix_t sysmiv_;
-
+		num_p massmp_;
+		matrix_t massm_;
 		std::vector<num_p> lift_matrix_p_;
 		std::vector<num_p> flux_matrix_p_;
 		std::vector<matrix_t> lift_matrix_;
 		std::vector<matrix_t> flux_matrix_;		
 	};
+	std::ostream& operator<<(std::ostream& os , const system_matrix_angle& s);
 }

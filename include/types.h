@@ -55,6 +55,16 @@ namespace dgn {
 		quadrant::quadrant7,
 		quadrant::quadrant8,
 	};
+	const std::array<std::string, 8> quadrant_name_list = {
+		"quadrant1",
+		"quadrant2",
+		"quadrant3",
+		"quadrant4",
+		"quadrant5",
+		"quadrant6",
+		"quadrant7",
+		"quadrant8"
+	};
 
 	//interface directions and list for it
 	enum class interface_direction {	
@@ -75,6 +85,15 @@ namespace dgn {
 		interface_direction::U
 	};
 
+	const std::array<std::string, 6> interface_direction_name_list = {
+		"Back",
+		"Front",
+		"Left",
+		"Right",
+		"Down",
+		"Up"
+	};
+
 
 	static const std::vector<size_t> INTERFACE_TOTAL = { 1, 2, 4, 6 };
 	static const std::vector<size_t> QUADRANT_TOTAL = { 1, 2, 4, 8 };
@@ -90,6 +109,5 @@ namespace dgn {
 		pre = 0,
 		inc = 1
 	};
-
-	typedef num_t (*f3d_p)(num_t, num_t, num_t);	
+	
 }

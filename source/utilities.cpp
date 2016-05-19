@@ -21,6 +21,28 @@ dgn::quadrant dgn::utilities::quadrant_of_angle(num_t mu, num_t xi, num_t eta)
 	return quadrant::quadrant8;
 }
 
+bool dgn::utilities::quadrant_x_positive_flag(quadrant quad)
+{
+	return (quad == quadrant::quadrant1 || 
+			quad == quadrant::quadrant4 || 
+			quad == quadrant::quadrant5 || 
+			quad == quadrant::quadrant8);
+}
+bool dgn::utilities::quadrant_y_positive_flag(quadrant quad)
+{
+	return (quad == quadrant::quadrant1 ||
+			quad == quadrant::quadrant2 ||
+			quad == quadrant::quadrant5 ||
+			quad == quadrant::quadrant6);
+}
+bool dgn::utilities::quadrant_z_positive_flag(quadrant quad)
+{
+	return (quad == quadrant::quadrant1 ||
+			quad == quadrant::quadrant2 ||
+			quad == quadrant::quadrant3 ||
+			quad == quadrant::quadrant4);
+}
+
 bool dgn::utilities::is_boundary(interface_direction idir, size_t np, size_t ix, size_t iy, size_t iz)
 {
 	bool ans = false;
