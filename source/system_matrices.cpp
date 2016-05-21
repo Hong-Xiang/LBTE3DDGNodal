@@ -422,6 +422,7 @@ void dgn::matrices3d::memory_alloc()
 
 //========	Implement of system_matrix_angle	================================
 
+/*
 dgn::system_matrix_angle::system_matrix_angle(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma)
 	: matrices_(h, np), surface_matrices_(h, np), h_(h), np_(np), mu_(mu), xi_(xi), eta_(eta), sigma_(sigma)
 {
@@ -537,7 +538,150 @@ dgn::system_matrix_angle::system_matrix_angle(num_t h, size_t np, num_t mu, num_
 	
 	ipiv = new MKL_INT[tbs];
 	sysmlu_.lu_factorization(sysm_, ipiv);
+
 	sysmiv_.getri(sysm_);
+	
+
+	
+
+}
+*/
+
+dgn::system_matrix_angle::system_matrix_angle(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma)
+	: matrices_(h, np), surface_matrices_(h, np), h_(h), np_(np), mu_(mu), xi_(xi), eta_(eta), sigma_(sigma)
+{
+	matrices_.initialize();
+	surface_matrices_.initialize();
+	size_t tbs = matrices_.basis_total();
+
+	sysmp_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	sysm_.bind(tbs, tbs, sysmp_);
+	sysmlup_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	sysmlu_.bind(tbs, tbs, sysmlup_);
+	sysmivp_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	sysmiv_.bind(tbs, tbs, sysmivp_);
+
+	massmp_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	massm_.bind(tbs, tbs, massmp_);
+
+	massm_.omatcopy(matrices_.m());
+
+	reorder_p_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	back_order_p_ = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+
+	reorder_.bind(tbs, tbs, reorder_p_);
+	back_order_.bind(tbs, tbs, back_order_p_);
+
+
+	std::vector<size_t> pos;
+	pos.clear();
+	pos.resize(tbs);
+	for (size_t i = 0; i < tbs; i++)
+	{
+		size_t ix, iy, iz;
+		xlib::ind2sub(np, np, np, i, ix, iy, iz);
+		if (mu < 0)
+			ix = np - 1 - ix;
+		if (xi < 0)
+			iy = np - 1 - iy;
+		if (eta < 0)
+			iz = np - 1 - iz;
+		size_t nid;
+		xlib::sub2ind(np, np, np, nid, ix, iy, iz);
+		pos.at(i) = nid;
+	}
+
+	for (size_t i = 0; i < tbs; i++)
+	{
+		reorder_(i, pos.at(i)) = 1.0;
+		back_order_(pos.at(i), i) = 1.0;
+	}
+
+	size_t tis = INTERFACE_TOTAL.at(3);
+	lift_matrix_p_.resize(tis);
+	flux_matrix_p_.resize(tis);
+	lift_matrix_.resize(tis);
+	flux_matrix_.resize(tis);
+
+	size_t tbls = matrices_.basis_lower_dim_total();
+	for (size_t i = 0; i < tis; i++)
+	{
+		interface_direction dir = interface_direction_list.at(i);
+		lift_matrix_p_.at(i) = xlib::mkl_ext::xcalloc<num_t>(tbs*tbls);
+		flux_matrix_p_.at(i) = xlib::mkl_ext::xcalloc<num_t>(tbls*tbs);
+		lift_matrix_.at(i).bind(tbs, tbls, lift_matrix_p_.at(i));
+		lift_matrix_.at(i).gemm(matrices_.lift_matrix(dir), matrices_.flux_matrix(dir), 1.0, 0.0, CblasNoTrans, CblasTrans);
+
+		flux_matrix_.at(i).bind(tbls, tbs, flux_matrix_p_.at(i));
+		flux_matrix_.at(i).omatcopy(matrices_.flux_matrix(dir));
+		flux_matrix_.at(i).imatcopy('T');
+
+		if (dir == interface_direction::B || dir == interface_direction::F) {
+			lift_matrix_.at(i).imatcopy('N', abs(mu_));
+			flux_matrix_.at(i).imatcopy('N', 1.0);
+		}
+		if (dir == interface_direction::L || dir == interface_direction::R) {
+			lift_matrix_.at(i).imatcopy('N', abs(xi_));
+			flux_matrix_.at(i).imatcopy('N', 1.0);
+		}
+		if (dir == interface_direction::D || dir == interface_direction::U) {
+			lift_matrix_.at(i).imatcopy('N', abs(eta_));
+			flux_matrix_.at(i).imatcopy('N', 1.0);
+		}
+
+	}
+
+	sysm_.omatadd(matrices_.m(), sysm_, sigma_, 0.0);
+
+	sysm_.omatadd(matrices_.sx(), sysm_, abs(mu_), 1.0);
+
+	sysm_.omatadd(matrices_.sy(), sysm_, abs(xi_), 1.0);
+
+	sysm_.omatadd(matrices_.sz(), sysm_, abs(eta_), 1.0);
+
+
+	num_p tmpp = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
+	matrix_t tmpm(tbs, tbs, tmpp);
+
+	size_t idir;
+
+	{
+		interface_direction dir = interface_direction::B;
+		idir = static_cast<size_t>(dir);
+		tmpm.gemm(lift_matrix_.at(idir), matrices_.flux_matrix(dir));
+		sysm_.omatadd(tmpm, sysm_, 1.0, 1.0);
+	}
+
+
+
+	{
+		interface_direction dir = interface_direction::L;
+		idir = static_cast<size_t>(dir);
+		tmpm.gemm(lift_matrix_.at(idir), matrices_.flux_matrix(dir));
+		sysm_.omatadd(tmpm, sysm_, 1.0, 1.0);
+	}
+
+
+
+
+	{
+		interface_direction dir = interface_direction::D;
+		idir = static_cast<size_t>(dir);
+		tmpm.gemm(lift_matrix_.at(idir), matrices_.flux_matrix(dir));
+		sysm_.omatadd(tmpm, sysm_, 1.0, 1.0);
+	}
+
+
+	mkl_free(tmpp);
+
+	ipiv = new MKL_INT[tbs];
+	sysmlu_.lu_factorization(sysm_, ipiv);
+
+	sysmiv_.getri(sysm_);
+
+
+
+
 }
 
 dgn::system_matrix_angle::~system_matrix_angle()
@@ -559,6 +703,11 @@ dgn::system_matrix_angle::~system_matrix_angle()
 	for (size_t i = 0; i < flux_matrix_p_.size(); i++)	
 		if (flux_matrix_p_.at(i) != nullptr)
 			mkl_free(flux_matrix_p_.at(i));	
+
+	if (reorder_p_ != nullptr)
+		mkl_free(reorder_p_);
+	if (back_order_p_ != nullptr)
+		mkl_free(back_order_p_);
 }
 
 //==============================================================================
@@ -587,7 +736,7 @@ std::ostream & dgn::operator<<(std::ostream & os, const system_matrix_angle & s)
 
 	os << "========   system matrix:  ===============" << std::endl;
 	os << "system matrix:" << std::endl << s.system_matrix();
-	os << "inverse of system matrix:" << std::endl << s.system_matrix();
+	os << "inverse of system matrix:" << std::endl << s.system_matrixiv();
 	os << "==========================================" << std::endl;
 
 	os << "========   mass matrix: ==================" << std::endl;
@@ -608,6 +757,11 @@ std::ostream & dgn::operator<<(std::ostream & os, const system_matrix_angle & s)
 		os << "direction " << interface_direction_name_list.at(i).c_str() << ":" << std::endl;
 		os << s.flux_matrix(interface_direction_list.at(i));
 	}
+	os << "==========================================" << std::endl;
+
+	os << "========  reorder matries:  =================" << std::endl;
+	os << "reorder " << std::endl << s.reorder();
+	os << "back order" << std::endl << s.back_order();
 	os << "==========================================" << std::endl;
 	return os;
 }

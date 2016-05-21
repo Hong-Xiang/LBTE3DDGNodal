@@ -43,7 +43,13 @@ namespace dgn {
 
 	class solver {
 	public:
-		solver(const system_matrix_angle& s, const mesh& m);
+		static const size_t total_node_element(const mesh& m, size_t np);
+		static const size_t total_node_surface(const mesh& m, size_t np);
+
+		const size_t total_node_element() const;
+		const size_t total_node_surface() const;
+	public:
+		solver(const system_matrix_angle& s, const mesh& m);		
 		~solver();
 		//void source_set(vector_t s);
 		//void boudnary_set(vector_t b);
@@ -56,11 +62,22 @@ namespace dgn {
 		
 		void solve_analytical(size_t id);
 
+		num_p boundary_ptr() const { return boundary_p_; }
+		num_p source_ptr() const { return source_p_; }
+		num_p solution_ptr() const { return solution_p_; }
+
 		vector_t x() const { return sg_.x(); }
 		vector_t y() const { return sg_.y(); }
 		vector_t z() const { return sg_.z(); }
-		vector_t solution() const { return solution_; }			
+		vector_t solution() const { return solution_; }
+		vector_t x_b() const { return bg_.x(); }
+		vector_t y_b() const { return bg_.y(); }
+		vector_t z_b() const { return bg_.z(); }
 		void solution_mean(vector_t data) const;
+
+		size_t memory_total_solution() const {
+			return m_->memory_element_total(s_->basis_element());
+		}
 	private:
 		source_generator sg_;
 		boundary_generator bg_;

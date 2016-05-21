@@ -68,12 +68,20 @@ namespace dgn {
 
 	class matrices1d : public matrices_base {
 	public:
+		static size_t basis_total(size_t np) {
+			return np;
+		}
+		static size_t basis_lower_dim_total(size_t np) {
+			return 1;
+		}
+	public:
+		
 		matrices1d(num_t h, size_t np);
 		const vector_t x() const { return x_; }
 		const matrix_t m() const { return m_; }
 		const matrix_t s() const { return s_; }
-		virtual const size_t basis_total() const { return np_; }
-		virtual const size_t basis_lower_dim_total() const { return 1; }
+		virtual const size_t basis_total() const { return basis_total(np_); }
+		virtual const size_t basis_lower_dim_total() const { return basis_lower_dim_total(np_); }
 		virtual size_t dimension() const { return 1; }
 		~matrices1d();
 	protected:
@@ -93,6 +101,13 @@ namespace dgn {
 
 
 	class matrices2d : public matrices_base {
+	public:
+		static size_t basis_total(size_t np) {
+			return np*np;
+		}
+		static size_t basis_lower_dim_total(size_t np) {
+			return np;
+		}
 	public:
 		matrices2d(num_t h, size_t np);
 		const size_t basis_total() const { return np_*np_; }
@@ -123,6 +138,13 @@ namespace dgn {
 	};
 
 	class matrices3d : public matrices_base {
+	public:
+		static size_t basis_total(size_t np) {
+			return np*np*np;
+		}
+		static size_t basis_lower_dim_total(size_t np) {
+			return np*np;
+		}
 	public:
 		matrices3d(num_t h, size_t np);
 		virtual const size_t basis_total() const { return np_*np_*np_; }
@@ -159,7 +181,14 @@ namespace dgn {
 		matrix_t sz_;
 	};
 
-	class system_matrix_angle {
+	class system_matrix_angle {			
+	public:
+		static size_t basis_total(size_t np) {
+			return matrices3d::basis_total(np);
+		}
+		static size_t basis_lower_dim_total(size_t np) {
+			return matrices3d::basis_lower_dim_total(np);
+		}
 	public:
 		system_matrix_angle(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma);
 		const matrix_t system_matrix() const { return sysm_; }
@@ -168,6 +197,13 @@ namespace dgn {
 		const matrix_t mass_matrix() const { return massm_; }
 		const matrix_t lift_matrix(interface_direction dir) const {
 			return lift_matrix_.at(static_cast<size_t>(dir));
+		}
+		const matrix_t reorder() const {
+			return reorder_;
+		}
+		
+		const matrix_t back_order() const {
+			return back_order_;
 		}
 		const matrix_t flux_matrix(interface_direction dir) const {
 			return flux_matrix_.at(static_cast<size_t>(dir));
@@ -179,6 +215,7 @@ namespace dgn {
 		const vector_t xs() const { return surface_matrices_.x(); }
 		const vector_t ys() const { return surface_matrices_.y(); }
 
+		const size_t np() const { return np_; }
 		num_t mu() const { return mu_; }
 		num_t xi() const { return xi_; }
 		num_t eta() const { return eta_; }
@@ -207,6 +244,11 @@ namespace dgn {
 		std::vector<num_p> flux_matrix_p_;
 		std::vector<matrix_t> lift_matrix_;
 		std::vector<matrix_t> flux_matrix_;		
+
+		num_p reorder_p_;
+		matrix_t reorder_;
+		num_p back_order_p_;
+		matrix_t back_order_;
 	};
 	std::ostream& operator<<(std::ostream& os , const system_matrix_angle& s);
 }

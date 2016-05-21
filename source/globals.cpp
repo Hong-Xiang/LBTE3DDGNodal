@@ -6,6 +6,8 @@ namespace dgn {
 	dgn::num_t analytical_solution::solution(num_t x, num_t y, num_t z, num_t mu, num_t xi, num_t eta, num_t sigma)
 	{
 		num_t ans = 0;
+		num_t r2 = 0.0;
+		num_t r = 0.0;
 		switch (test_id_)
 		{
 		case 0:
@@ -23,9 +25,11 @@ namespace dgn {
 		case 4:
 			ans = std::exp(-sigma*(x*x + y*y + z*z));
 			break;
-					//case 6:
-					//	r = (x. ^ 2 + y. ^ 2 + z. ^ 2). ^ (1 / 2);
-					//	f = exp(-sigma*r);		*/
+		case 5:
+			r2 = x*x + y*y + z*z;
+			r = std::pow(r2, 0.5);
+			ans = std::exp(-sigma*r);
+			break;
 		default:
 			throw(unknown_test_id());
 			break;
@@ -37,6 +41,7 @@ namespace dgn {
 	{
 		num_t ans = 0.0;
 		num_t r2 = 0.0;
+		num_t r = 0.0;
 		switch (test_id_)
 		{
 		case 0:
@@ -57,6 +62,14 @@ namespace dgn {
 		case 4:			
 			r2 = x*x + y*y + z*z;
 			ans = mu*(-2)*sigma*x*std::exp(-sigma*r2) + xi*(-2)*sigma*y*std::exp(-sigma*r2) + eta*(-2)*sigma*z*std::exp(-sigma*r2) + sigma*std::exp(-sigma*r2);
+			break;
+		case 5:
+			r2 = x*x + y*y + z*z;
+			r = std::pow(r2, 0.5);
+			if(r == 0)
+				ans = sigma*std::exp(-sigma*r);
+			else
+				ans = mu*sigma*x/r*std::exp(-sigma*r) + xi*sigma*y/r*std::exp(-sigma*r) + eta*sigma*z/r*std::exp(-sigma*r) + sigma*std::exp(-sigma*r);
 			break;
 		default:
 			throw(unknown_test_id());

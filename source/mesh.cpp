@@ -481,12 +481,13 @@ std::ostream& dgn::operator<<(std::ostream& os, const mesh& m)
 	}
 	os << "===========================================" << std::endl;
 
+	std::vector<vector3> sc = m.center_surface();
 	os << "========   surface info:   ================" << std::endl;
-	os << "id\tbd_flag\tdiret" << std::endl;
+	os << "id\tbd_flag\tdiret\txc\tyc\tzc" << std::endl;
 	std::vector<bool> bdf = m.boundary_mark(1);
 	for (size_t i = 0; i < m.surfaces_total(); i++)
 	{
-		os << i << "\t" << bdf.at(i) << "\t" << static_cast<size_t>(m.surface_ref(i).direction()) << std::endl;
+		os << i << "\t" << bdf.at(i) << "\t" << static_cast<size_t>(m.surface_ref(i).direction()) << "\t" << sc.at(i).x() << "\t" << sc.at(i).y() << "\t" << sc.at(i).z() << std::endl;
 	}
 	os << "===========================================" << std::endl;
 
