@@ -266,24 +266,24 @@ void dgn::solver::solve()
 	bool yincf = utilities::quadrant_y_positive_flag(quad);
 	bool zincf = utilities::quadrant_z_positive_flag(quad);
 
-#ifdef _DEBUG
-	num_p solution_ana_p = xlib::mkl_ext::xcalloc<num_t>(m_->memory_element_total(s_->basis_element()));
-	num_p boundary_ana_p = xlib::mkl_ext::xcalloc<num_t>(m_->memory_surface_total(s_->basis_surface()));
-	vector_t solution_ana(m_->memory_element_total(s_->basis_element()), solution_ana_p);
-	vector_t boundary_ana(m_->memory_element_total(s_->basis_surface()), boundary_ana_p);
-	vector_t xe = sg_.x(), ye = sg_.y(), ze = sg_.z();
-	for (size_t i = 0; i < m_->memory_element_total(s_->basis_element()); i++)
-	{
-		solution_ana(i) = analytical_solution::solution(xe(i), ye(i), ze(i), mu, xi, eta, s_->sigma());
-	}
-	vector_t xb = bg_.x(), yb = bg_.y(), zb = bg_.z();
-	for (size_t i = 0; i < m_->memory_surface_total(s_->basis_surface()); i++)
-	{
-		boundary_ana(i) = analytical_solution::solution(xb(i), yb(i), zb(i), mu, xi, eta, s_->sigma());
-	}
-
-	vector_t bda_xpre, bda_ypre, bda_zpre, bda_xinc, bda_yinc, bda_zinc, sa;
-#endif
+//#ifdef _DEBUG
+//	num_p solution_ana_p = xlib::mkl_ext::xcalloc<num_t>(m_->memory_element_total(s_->basis_element()));
+//	num_p boundary_ana_p = xlib::mkl_ext::xcalloc<num_t>(m_->memory_surface_total(s_->basis_surface()));
+//	vector_t solution_ana(m_->memory_element_total(s_->basis_element()), solution_ana_p);
+//	vector_t boundary_ana(m_->memory_element_total(s_->basis_surface()), boundary_ana_p);
+//	vector_t xe = sg_.x(), ye = sg_.y(), ze = sg_.z();
+//	for (size_t i = 0; i < m_->memory_element_total(s_->basis_element()); i++)
+//	{
+//		solution_ana(i) = analytical_solution::solution(xe(i), ye(i), ze(i), mu, xi, eta, s_->sigma());
+//	}
+//	vector_t xb = bg_.x(), yb = bg_.y(), zb = bg_.z();
+//	for (size_t i = 0; i < m_->memory_surface_total(s_->basis_surface()); i++)
+//	{
+//		boundary_ana(i) = analytical_solution::solution(xb(i), yb(i), zb(i), mu, xi, eta, s_->sigma());
+//	}
+//
+//	vector_t bda_xpre, bda_ypre, bda_zpre, bda_xinc, bda_yinc, bda_zinc, sa;
+//#endif
 
 
 	//Reorder.
@@ -362,15 +362,15 @@ void dgn::solver::solve()
 		sor_e.bind(n_node_element, source_.ptr() + memory_element.at(i));
 		s_e.bind(n_node_element, solution_p_ + memory_element.at(i));
 
-#ifdef _DEBUG
-		bda_xpre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_xpre));
-		bda_ypre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_ypre));
-		bda_zpre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_zpre));
-		bda_xinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_xinc));
-		bda_yinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_yinc));
-		bda_zinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_zinc));
-		sa.bind(n_node_element, solution_ana_p + memory_element.at(i));
-#endif
+//#ifdef _DEBUG
+//		bda_xpre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_xpre));
+//		bda_ypre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_ypre));
+//		bda_zpre.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_zpre));
+//		bda_xinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_xinc));
+//		bda_yinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_yinc));
+//		bda_zinc.bind(n_node_surface, boundary_ana_p + memory_surface.at(ib_zinc));
+//		sa.bind(n_node_element, solution_ana_p + memory_element.at(i));
+//#endif
 		// Calculate b
 
 

@@ -8,8 +8,18 @@ namespace linear_boltzmann_transport_equation_solver {
 	{
 		switch (test_id_)
 		{
+			num_t r2, r, ans;
 		case 0:
 			return 1.0;
+			break;
+		case 1:
+			
+			r2 = x*x + y*y + z*z;
+			r = std::pow(r2, 0.5);
+			ans = std::exp(-sigma*r);
+			return ans;
+		case 2:
+			return std::exp(-sigma*(x*x + y*y + z*z));
 			break;
 		default:
 			throw(UnknownTestId(test_id_));
@@ -21,8 +31,24 @@ namespace linear_boltzmann_transport_equation_solver {
 	{
 		switch (test_id_)
 		{
+			num_t r2, r, ans;
 		case 0:
-			return sigma;
+			return sigma-0.5;
+			break;
+		case 1:
+			
+			r2 = x*x + y*y + z*z;
+			r = std::pow(r2, 0.5);
+			if (r == 0)
+				ans = sigma*std::exp(-sigma*r);
+			else
+				ans = mu*sigma*x / r*std::exp(-sigma*r) + xi*sigma*y / r*std::exp(-sigma*r) + eta*sigma*z / r*std::exp(-sigma*r) + sigma*std::exp(-sigma*r);
+			return ans;
+			break;
+		case 2:
+			r2 = x*x + y*y + z*z;
+			ans = mu*(-2)*sigma*x*std::exp(-sigma*r2) + xi*(-2)*sigma*y*std::exp(-sigma*r2) + eta*(-2)*sigma*z*std::exp(-sigma*r2) + (sigma-0.5)*std::exp(-sigma*r2);
+			return ans;
 			break;
 		default:
 			throw(UnknownTestId(test_id_));

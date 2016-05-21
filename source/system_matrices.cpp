@@ -618,14 +618,17 @@ dgn::system_matrix_angle::system_matrix_angle(num_t h, size_t np, num_t mu, num_
 
 		if (dir == interface_direction::B || dir == interface_direction::F) {
 			lift_matrix_.at(i).imatcopy('N', abs(mu_));
+			//lift_matrix_.at(i).imatcopy('N', mu_);
 			flux_matrix_.at(i).imatcopy('N', 1.0);
 		}
 		if (dir == interface_direction::L || dir == interface_direction::R) {
 			lift_matrix_.at(i).imatcopy('N', abs(xi_));
+			//lift_matrix_.at(i).imatcopy('N', xi_);
 			flux_matrix_.at(i).imatcopy('N', 1.0);
 		}
 		if (dir == interface_direction::D || dir == interface_direction::U) {
 			lift_matrix_.at(i).imatcopy('N', abs(eta_));
+			//lift_matrix_.at(i).imatcopy('N', eta_);
 			flux_matrix_.at(i).imatcopy('N', 1.0);
 		}
 
@@ -634,11 +637,12 @@ dgn::system_matrix_angle::system_matrix_angle(num_t h, size_t np, num_t mu, num_
 	sysm_.omatadd(matrices_.m(), sysm_, sigma_, 0.0);
 
 	sysm_.omatadd(matrices_.sx(), sysm_, abs(mu_), 1.0);
-
 	sysm_.omatadd(matrices_.sy(), sysm_, abs(xi_), 1.0);
-
 	sysm_.omatadd(matrices_.sz(), sysm_, abs(eta_), 1.0);
 
+	//sysm_.omatadd(matrices_.sx(), sysm_, mu_, 1.0);
+	//sysm_.omatadd(matrices_.sy(), sysm_, xi_, 1.0);
+	//sysm_.omatadd(matrices_.sz(), sysm_, eta_, 1.0);
 
 	num_p tmpp = xlib::mkl_ext::xcalloc<num_t>(tbs*tbs);
 	matrix_t tmpm(tbs, tbs, tmpp);

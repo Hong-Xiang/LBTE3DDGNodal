@@ -2,7 +2,7 @@
 #include "globals_mul.h"
 #include "system_matrices.h"
 #include "solver.h"
-
+#include <ctime>
 namespace linear_boltzmann_transport_equation_solver {
 
 	ProblemDefinition::ProblemDefinition(size_t nx, size_t ny, size_t nz, size_t np, size_t na, num_t sigma, std::string file_scattering_matrix, std::string file_angle_info)
@@ -14,17 +14,22 @@ namespace linear_boltzmann_transport_equation_solver {
 		xc_ = 0.0, yc_ = 0.0, zc_ = 0.0;
 		verbose_ = 2;
 		iteration_number_ = 10;
-
 	}
 
 	void SolverMultiAngle::Initialization()
 	{		
 		load_scattering_matrix();
+		std::cout << "load scattering matrix finished" << std::endl;
 		load_angles();
+		std::cout << "load angle finished" << std::endl;
 		ConstructSystemMatrices();
+		std::cout << "construct system matrix finished" << std::endl;
 		ConstructBasicDiscontinuesGalerkinNodalSolvers();
+		std::cout << "construct solver finished" << std::endl;
 		BindVectors();
+		std::cout << "bind vector finished" << std::endl;
 		ConstructCoordinates();		
+		std::cout << "construct coordinate finished" << std::endl;
 	}
 
 	SolverMultiAngle::~SolverMultiAngle()
@@ -50,7 +55,10 @@ namespace linear_boltzmann_transport_equation_solver {
 	{
 		for (size_t i = 0; i < problem_definition_.iteration_number(); i++)
 		{
+			time_t t0 = std::clock();
 			Iteration();
+			time_t t1 = std::clock();
+			std::cout << "iteration " << i << " end, cost " << (double)(t1 - t0) / CLOCKS_PER_SEC << std::endl;
 		}
 	}
 
@@ -88,7 +96,7 @@ namespace linear_boltzmann_transport_equation_solver {
 			num_t mu = mu_(ia), xi = xi_(ia), eta = eta_(ia);
 			for (size_t inode = 0; inode < sources_ext_multiple_.at(ia).size(); inode++)
 			{
-				sources_ext_multiple_.at(ia)(inode) = AnalyticalSolution::solution(
+				sources_ext_multiple_.at(ia)(inode) = AnalyticalSolution::source(
 					x_solution_(inode),
 					y_solution_(inode),
 					z_solution_(inode),
@@ -101,26 +109,59 @@ namespace linear_boltzmann_transport_equation_solver {
 		}
 	}
 
+	void SolverMultiAngle::CalculateBoundaryAnalytical()
+	{
+		for (size_t ia = 0; ia < problem_definition_.na(); ia++)
+		{
+			num_t mu = mu_(ia), xi = xi_(ia), eta = eta_(ia);
+			for (size_t inode = 0; inode < boundary_multiple_.at(ia).size(); inode++)
+			{
+				boundary_multiple_.at(ia)(inode) = AnalyticalSolution::solution(
+					x_boundary_(inode),
+					y_boundary_(inode),
+					z_boundary_(inode),
+					mu,
+					xi,
+					eta,
+					problem_definition_.sigma()
+				);
+			}
+		}
+	}
+
 	void SolverMultiAngle::Iteration()
 	{
+		
 		CalculateScattering();
 		for (size_t i = 0; i < problem_definition_.na(); i++)
 		{			
+			sources_single_.at(i).copy(sources_multiple_.at(i));			
+			sources_single_.at(i).add(sources_ext_multiple_.at(i));						
+			boundary_single_.at(i).copy(boundary_multiple_.at(i));
 			SolveSingleAngle(i);
-			solutions_single_.at(i).copy(solutions_multiple_.at(i));
+			solutions_multiple_.at(i).copy(solutions_single_.at(i));
+//#ifdef _DEBUG
+//			std::cout << "ia = " << i << std::endl;
+//			std::cout << "source = " << std::endl << sources_single_.at(i);
+//			std::cout << "boundary = " << std::endl << boundary_single_.at(i);
+//			std::cout << "solution = " << std::endl << solutions_single_.at(i);
+//			std::cout << "solution multiple = " << std::endl << solutions_multiple_.at(i);
+//			std::cout << "end of ia = " << i << std::endl;
+//#endif
 		}
+
 	}
 
 	void SolverMultiAngle::CalculateScattering()
 	{
+		
 		source_m_.gemm(scattering_matrix_, solution_m_);
+
 	}
 
 	void SolverMultiAngle::SolveSingleAngle(size_t ia)
 	{
-		num_p ptr;
-		size_t inc;
-		memory_manager_.solution_pos_inc(ia, ptr, inc);		
+		solvers_angle_.at(ia)->solve();
 	}
 
 	void SolverMultiAngle::load_scattering_matrix()
@@ -146,12 +187,20 @@ namespace linear_boltzmann_transport_equation_solver {
 			if (ptr != nullptr)
 				delete ptr;
 		}
+
 		system_matrices_.clear();
 		system_matrices_.resize(problem_definition_.na());
 
+		std::cout << "Start to construct system matrices" << std::endl;
 		for (size_t i = 0; i < problem_definition_.na(); i++)
 		{
 			num_t mu = mu_(i), xi = xi_(i), eta = eta_(i);
+			num_t h = problem_definition_.h();
+			size_t np = problem_definition_.np();
+			num_t sigma = problem_definition_.sigma();
+			std::cout << "ia = " << i 
+				<< " mu= " << mu << "xi= " << xi << "eta= " << eta
+				<< "h= " << h << "np= " << np << "sigma= " << sigma << std::endl;
 			system_matrices_.at(i) = new SystemMatrixSingleAngle(
 				problem_definition_.h(),
 				problem_definition_.np(),
@@ -185,7 +234,8 @@ namespace linear_boltzmann_transport_equation_solver {
 	void SolverMultiAngle::ConstructCoordinates()
 	{
 		size_t total_node_element = mesh_.memory_element_total(SystemMatrixSingleAngle::basis_total(problem_definition_.np()));
-		size_t total_node_surface = mesh_.memory_surface_total(SystemMatrixSingleAngle::basis_lower_dim_total(problem_definition_.np()));
+		size_t total_node_surface = mesh_.memory_surface_total(SystemMatrixSingleAngle::basis_lower_dim_total(problem_definition_.np()));		
+		
 		x_solution_.alloc(total_node_element);
 		y_solution_.alloc(total_node_element);
 		z_solution_.alloc(total_node_element);
@@ -199,6 +249,20 @@ namespace linear_boltzmann_transport_equation_solver {
 		mu_boundary_.alloc(total_node_surface);
 		xi_boundary_.alloc(total_node_surface);
 		eta_boundary_.alloc(total_node_surface);
+
+
+
+
+
+		x_solution_.copy(solvers_angle_.at(0)->x());
+		y_solution_.copy(solvers_angle_.at(0)->y());
+		z_solution_.copy(solvers_angle_.at(0)->z());
+		x_boundary_.copy(solvers_angle_.at(0)->x_b());
+		y_boundary_.copy(solvers_angle_.at(0)->y_b());
+		z_boundary_.copy(solvers_angle_.at(0)->z_b());
+
+		
+		
 	}
 
 	void SolverMultiAngle::BindVectors()
@@ -248,7 +312,7 @@ namespace linear_boltzmann_transport_equation_solver {
 			memory_manager_.source_ext_pos_inc(ia, ptr, inc);
 			sources_ext_multiple_.at(ia).bind(total_element_node_per_angle, ptr, inc);
 			memory_manager_.boundary_pos_inc(ia, ptr, inc);
-			boundary_multiple_.at(ia).bind(total_element_node_per_angle, ptr, inc);
+			boundary_multiple_.at(ia).bind(total_surface_node_per_angle, ptr, inc);
 
 			solution_m_.bind(na_, total_element_node_per_angle, memory_manager_.solution_ptr());
 			source_m_.bind(na_, total_element_node_per_angle, memory_manager_.source_ptr());
@@ -256,7 +320,7 @@ namespace linear_boltzmann_transport_equation_solver {
 			solution_v_.bind(na_*total_element_node_per_angle, memory_manager_.solution_ptr());
 			source_v_.bind(na_*total_element_node_per_angle, memory_manager_.source_ptr());
 			source_ext_v_.bind(na_*total_element_node_per_angle, memory_manager_.source_ext_ptr());
-			boundary_v_.bind(na_*total_element_node_per_angle, memory_manager_.boundary_ptr());
+			boundary_v_.bind(na_*total_surface_node_per_angle, memory_manager_.boundary_ptr());
 		}
 	}
 

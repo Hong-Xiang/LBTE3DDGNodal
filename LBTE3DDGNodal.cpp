@@ -1,7 +1,22 @@
-//////#include <mkl.h>
-//////#include <iostream>
-//////#include <fstream>
-//////#include <random>
+#include <mkl.h>
+#include <iostream>
+#include <fstream>
+#include <random>
+#include "system_matrices.h"
+#include "globals.h"
+#include "types.h"
+#include "utilities.h"
+#include "xlib_mkl_ext.hpp"
+#include "mesh.h"
+#include "solver.h"
+#include "system_matrices.h"
+#include "mesh.h"
+
+#include <mat.h>
+#include <mex.h>
+#include <engine.h>
+
+
 //////
 ////////int main_() {	
 ////////	num_t h = 1, mu = 0.0, xi = 0.0, eta = 1.0, sigma = 3;
@@ -122,12 +137,6 @@
 ////////}
 //////
 //////
-//////#include "system_matrices.h"
-//////#include "globals.h"
-//////#include "types.h"
-//////#include "utilities.h"
-//////#include "xlib_mkl_ext.hpp"
-//////#include "mesh.h"
 //////int main___() {
 //////	
 //////	std::ofstream fout("result.txt");
@@ -167,13 +176,6 @@
 //////}
 //////
 //////
-//////#include "solver.h"
-//////#include "system_matrices.h"
-//////#include "mesh.h"
-//////
-//////#include <mat.h>
-//////#include <mex.h>
-//////#include <engine.h>
 //////
 //////#include <ctime>
 //////
@@ -239,183 +241,161 @@
 //////		mxDestroyArray(pa);
 //////}
 //////
-//////#include <ctime>
-//////
-//////int main____() {
-//////	////std::ofstream fout("mesh.txt");
-//////	//dgn::mesh m(15, 15, 15, 2.0/3, 0, 0, 0);
-//////	//m.generate();
-//////	//m.cache_sweep_order();
-//////	////fout << m;
-//////	////fout.close();
-//////
-//////	////std::cout << "id\tix\tiy\tiz" << std::endl;
-//////	////for (size_t i = 0; i < 3*3*3; i++)
-//////	////{
-//////	////	size_t ix, iy, iz;
-//////	////	xlib::ind2sub(3, 3, 3, i, ix, iy, iz);
-//////	////	std::cout << i << "\t" << ix << "\t" << iy << "\t" << iz << std::endl;
-//////	////}
-//////
-//////	////std::cout << m.memory_element(8);
-//////	////std::cout << m.memory_surface(4);
-//////	//std::cout << m.memory_element_total(8) << std::endl;
-//////	//std::cout << m.memory_surface_total(4) << std::endl;
-//////
-//////	//const MKL_INT N = 3;
-//////	//double* a = xlib::mkl_ext::xcalloc<double>(N);
-//////	//for (size_t i = 0; i < N; i++)
-//////	//{
-//////	//	a[i] = (double)rand() / RAND_MAX;
-//////	//}
-//////	//double* b = xlib::mkl_ext::xcalloc<double>(N);
-//////	//double* y = xlib::mkl_ext::xcalloc<double>(N);
-//////	//double scalea = 1.0, scaleb = 0.0, r , shiftb = 1.0;
-//////	//std::cin >> r;
-//////	//dgn::vector_t va(N, a);
-//////	//dgn::vector_t vy(N, y);
-//////	//vdLinearFrac(N, a, b, scalea, r, scaleb, shiftb, y);
-//////	//std::cout << va;
-//////	//std::cout << vy;
-//////	//mkl_free(a);
-//////	// 
-//////
-//////	std::cout << "Solver Start." << std::endl;
-//////	size_t testid = 3;
-//////	std::ofstream fout("result.txt");
-//////	std::cout << "input test case id (default= " << testid << ")" << std::endl;
-//////	std::cin >> testid;
-//////	dgn::analytical_solution::set_test_id(testid);
-//////	//size_t nx = 15, ny = 15, nz = 15;
-//////	size_t nx = 2, ny = 1, nz = 1;
-//////	std::cout << "intput nx, ny and nz:" << std::endl;
-//////	std::cin >> nx >> ny >> nz;
-//////	size_t np = 2;
-//////	std::cout << "input np" << std::endl;
-//////	std::cin >> np;
-//////	dgn::num_t h = 2.0 / 15;
-//////	//dgn::num_t h = 1.0;
-//////	std::cout << "input h" << std::endl;
-//////	std::cin >> h;
-//////	dgn::num_t mu = 0.0, xi = 0.0, eta = 0.0, sigma = 1.0;
-//////	//std::cout << "input h (default= " << h << ")" << std::endl;
-//////	//std::cin >> h;
-//////	std::srand(std::clock());
-//////	mu = (dgn::num_t)rand() / RAND_MAX;
-//////	xi = (dgn::num_t)rand() / RAND_MAX;
-//////	eta = (dgn::num_t)rand() / RAND_MAX;
-//////	mu = 2 * mu - 1; xi = 2 * xi - 1; eta = 2 * eta - 1;
-//////	mu = -0.5; xi = 0.5; eta = 0.5;
-//////	//mu = -1.0; xi = -1.0; eta = -1.0;
-//////	//mu = -1.0; xi = 0; eta = 0;
-//////	
-//////	dgn::num_t r = mu*mu + xi*xi + eta*eta;
-//////	r = std::pow(r, 0.5);
-//////	//mu = mu / r; xi = xi / r; eta = eta / r;	
-//////	std::cout << "input mu, xi, eta " << std::endl;
-//////	std::cin >> mu >> xi >> eta;
-//////	std::cout << "mu= " << mu << "\txi= " << xi << "\teta= " << eta << std::endl;
-//////	
-//////	
-//////
-//////	dgn::system_matrix_angle sma(h, np, mu, xi, eta, sigma);
-//////		
-//////	std::cout << "system matrix generate start." << std::endl;
-//////	dgn::mesh m(nx, ny, nz, h, 0.0, 0.0, 0.0);
-//////	std::cout << "mesh generate start." << std::endl;
-//////	m.generate();
-//////	std::cout << "mesh generated." << std::endl;
-//////	m.cache_sweep_order();
-//////	std::cout << "mesh sweep order finished." << std::endl;
-//////	//fout << m;
-//////	fout << sma;
-//////	dgn::boundary_generator bdg(sma, m);
-//////	fout << "boundary x" << std::endl << bdg.x();
-//////	fout << "boundary y" << std::endl << bdg.y();
-//////	fout << "boundary z" << std::endl << bdg.z();
-//////	dgn::source_generator sg(sma, m);
-//////	fout << "source x" << std::endl << sg.x();
-//////	fout << "source y" << std::endl << sg.y();
-//////	fout << "source z" << std::endl << sg.z();
-//////	std::cout << "source boundary generated." << std::endl;
-//////	//fout << sma;
-//////
-//////	//std::cout << "meshinfo" << m;
-//////
-//////	//fout << "source " << std::endl;
-//////	dgn::analytical_solution::set_test_id(testid);
-//////	dgn::num_p ana_test_p = xlib::mkl_ext::xcalloc<dgn::num_t>(sg.x().size());
-//////	dgn::vector_t v(sg.x().size(), ana_test_p);
-//////	sg.calculate(v);
-//////	//fout << v << std::endl;
-//////
-//////	dgn::solver sol(sma, m);
-//////
-//////	dgn::num_p datam = xlib::mkl_ext::xcalloc<dgn::num_t>(m.elements_total());
-//////	dgn::vector_t solm(m.elements_total(), datam);
-//////	fout << "analytical solution" << std::endl;
-//////	sol.solve_analytical(testid);
-//////	sol.solution_mean(solm);
-//////	fout << sol.solution() << std::endl;
-//////	//fout << solm << std::endl;
-//////
-//////	std::vector<size_t> sz;
-//////	sz.push_back(solm.size());
-//////
-//////
-//////
-//////	xlib::imatlab::save_MAT_data(solm.ptr(), sz, "result.mat", "ustd", true);
-//////
-//////
-//////	fout << "numerical solution" << std::endl;
-//////	std::time_t t0 = std::clock();
-//////	sol.solve_test(testid);
-//////	sol.solution_mean(solm);
-//////	std::time_t t1 = std::clock();
-//////	std::cout << "solve costs " << (double)(t1 - t0) / CLOCKS_PER_SEC;
-//////	fout << sol.solution() << std::endl;
-//////	//fout << solm << std::endl;
-//////	xlib::imatlab::save_MAT_data(solm.ptr(), sz, "result.mat", "u");
-//////	fout.close();
-//////
-//////	Engine* ep;
-//////	ep = engOpen("\0");
-//////	engEvalString(ep, "cd C:/Workspace/LBTE3DDGNodal/build");
-//////	engEvalString(ep, "compare");	
-//////	//engClose(ep);
-//////	return 0;
-//////}
-//////
-//////int main_____() {
-//////	dgn::num_t h = 1;
-//////	size_t np = 2;
-//////	std::ofstream fout("result.txt");
-//////	dgn::num_t mu = 0.0, xi = 0.0, eta = -1.0, sigma = 1.0;
-//////	dgn::system_matrix_angle sm1(h, np, mu, xi, eta, sigma);
-//////	fout << sm1;
-//////
-//////	mu = 0.0, xi = 0.0, eta = 1.0, sigma = 1.0;
-//////	dgn::system_matrix_angle sm2(h, np, mu, xi, eta, sigma);
-//////	fout << sm2;
-//////
-//////	mu = 0.0, xi = 1.0, eta = 0.0, sigma = 1.0;
-//////	dgn::system_matrix_angle sm3(h, np, mu, xi, eta, sigma);
-//////	fout << sm3;
-//////
-//////	mu = 0.0, xi = -1.0, eta = 0.0, sigma = 1.0;
-//////	dgn::system_matrix_angle sm4(h, np, mu, xi, eta, sigma);
-//////	fout << sm4;
-//////
-//////	fout.close();
-//////	return 0;
-//////}
+#include <ctime>
+
+int main() {
+	////std::ofstream fout("mesh.txt");
+	//dgn::mesh m(15, 15, 15, 2.0/3, 0, 0, 0);
+	//m.generate();
+	//m.cache_sweep_order();
+	////fout << m;
+	////fout.close();
+
+	////std::cout << "id\tix\tiy\tiz" << std::endl;
+	////for (size_t i = 0; i < 3*3*3; i++)
+	////{
+	////	size_t ix, iy, iz;
+	////	xlib::ind2sub(3, 3, 3, i, ix, iy, iz);
+	////	std::cout << i << "\t" << ix << "\t" << iy << "\t" << iz << std::endl;
+	////}
+
+	////std::cout << m.memory_element(8);
+	////std::cout << m.memory_surface(4);
+	//std::cout << m.memory_element_total(8) << std::endl;
+	//std::cout << m.memory_surface_total(4) << std::endl;
+
+	//const MKL_INT N = 3;
+	//double* a = xlib::mkl_ext::xcalloc<double>(N);
+	//for (size_t i = 0; i < N; i++)
+	//{
+	//	a[i] = (double)rand() / RAND_MAX;
+	//}
+	//double* b = xlib::mkl_ext::xcalloc<double>(N);
+	//double* y = xlib::mkl_ext::xcalloc<double>(N);
+	//double scalea = 1.0, scaleb = 0.0, r , shiftb = 1.0;
+	//std::cin >> r;
+	//dgn::vector_t va(N, a);
+	//dgn::vector_t vy(N, y);
+	//vdLinearFrac(N, a, b, scalea, r, scaleb, shiftb, y);
+	//std::cout << va;
+	//std::cout << vy;
+	//mkl_free(a);
+	// 
+
+	std::cout << "Solver Start." << std::endl;
+	size_t testid = 3;
+	std::ofstream fout("result.txt");
+	std::cout << "input test case id (default= " << testid << ")" << std::endl;
+	std::cin >> testid;
+	dgn::analytical_solution::set_test_id(testid);
+	//size_t nx = 15, ny = 15, nz = 15;
+	size_t nx = 2, ny = 1, nz = 1;
+	std::cout << "intput nx, ny and nz:" << std::endl;
+	std::cin >> nx >> ny >> nz;
+	size_t np = 2;
+	std::cout << "input np" << std::endl;
+	std::cin >> np;
+	dgn::num_t h = 2.0 / 15;
+	//dgn::num_t h = 1.0;
+	std::cout << "input h" << std::endl;
+	std::cin >> h;
+	dgn::num_t mu = 0.0, xi = 0.0, eta = 0.0, sigma = 1.0;
+	//std::cout << "input h (default= " << h << ")" << std::endl;
+	//std::cin >> h;
+	std::srand(std::clock());
+	mu = (dgn::num_t)rand() / RAND_MAX;
+	xi = (dgn::num_t)rand() / RAND_MAX;
+	eta = (dgn::num_t)rand() / RAND_MAX;
+	mu = 2 * mu - 1; xi = 2 * xi - 1; eta = 2 * eta - 1;
+	mu = -0.5; xi = 0.5; eta = 0.5;
+	//mu = -1.0; xi = -1.0; eta = -1.0;
+	//mu = -1.0; xi = 0; eta = 0;
+	
+	dgn::num_t r = mu*mu + xi*xi + eta*eta;
+	r = std::pow(r, 0.5);
+	//mu = mu / r; xi = xi / r; eta = eta / r;	
+	std::cout << "input mu, xi, eta " << std::endl;
+	std::cin >> mu >> xi >> eta;
+	std::cout << "mu= " << mu << "\txi= " << xi << "\teta= " << eta << std::endl;
+	
+	
+
+	dgn::system_matrix_angle sma(h, np, mu, xi, eta, sigma);
+		
+	std::cout << "system matrix generate start." << std::endl;
+	dgn::mesh m(nx, ny, nz, h, 0.0, 0.0, 0.0);
+	std::cout << "mesh generate start." << std::endl;
+	m.generate();
+	std::cout << "mesh generated." << std::endl;
+	m.cache_sweep_order();
+	std::cout << "mesh sweep order finished." << std::endl;
+	//fout << m;
+	fout << sma;
+	dgn::boundary_generator bdg(sma, m);
+	fout << "boundary x" << std::endl << bdg.x();
+	fout << "boundary y" << std::endl << bdg.y();
+	fout << "boundary z" << std::endl << bdg.z();
+	dgn::source_generator sg(sma, m);
+	fout << "source x" << std::endl << sg.x();
+	fout << "source y" << std::endl << sg.y();
+	fout << "source z" << std::endl << sg.z();
+	std::cout << "source boundary generated." << std::endl;
+	//fout << sma;
+
+	//std::cout << "meshinfo" << m;
+
+	//fout << "source " << std::endl;
+	dgn::analytical_solution::set_test_id(testid);
+	dgn::num_p ana_test_p = xlib::mkl_ext::xcalloc<dgn::num_t>(sg.x().size());
+	dgn::vector_t v(sg.x().size(), ana_test_p);
+	sg.calculate(v);
+	//fout << v << std::endl;
+
+	dgn::solver sol(sma, m);
+
+	dgn::num_p datam = xlib::mkl_ext::xcalloc<dgn::num_t>(m.elements_total());
+	dgn::vector_t solm(m.elements_total(), datam);
+	fout << "analytical solution" << std::endl;
+	sol.solve_analytical(testid);
+	sol.solution_mean(solm);
+	fout << sol.solution() << std::endl;
+	//fout << solm << std::endl;
+
+	std::vector<size_t> sz;
+	sz.push_back(solm.size());
+
+
+
+	xlib::imatlab::save_MAT_data(solm.ptr(), sz, "result.mat", "ustd", true);
+
+
+	fout << "numerical solution" << std::endl;
+	std::time_t t0 = std::clock();
+	sol.solve_test(testid);
+	sol.solution_mean(solm);
+	std::time_t t1 = std::clock();
+	std::cout << "solve costs " << (double)(t1 - t0) / CLOCKS_PER_SEC;
+	fout << sol.solution() << std::endl;
+	//fout << solm << std::endl;
+	xlib::imatlab::save_MAT_data(solm.ptr(), sz, "result.mat", "u");
+	fout.close();
+
+	Engine* ep;
+	ep = engOpen("\0");
+	engEvalString(ep, "cd C:/Workspace/LBTE3DDGNodal/build");
+	engEvalString(ep, "compare");	
+	//engClose(ep);
+	return 0;
+}
 
 #include "memory_manager.h"
 #include "solver_multi_angle.h"
 #include <string>
 
-int main() {
-	size_t nx = 15, ny = 15, nz = 15, np = 2, na = 38;
+#include "globals_mul.h"
+
+int main__() {
+	size_t nx = 45, ny = 45, nz = 45, np = 2, na = 38;
 	linear_boltzmann_transport_equation_solver::num_t sigma = 1.0;
 	std::string file_scattering_matrix = "scattering_matrix_c.mat";
 	std::string file_angle_info = "angleinfo_c.mat";
@@ -429,13 +409,20 @@ int main() {
 		file_scattering_matrix,
 		file_angle_info
 	);
+	linear_boltzmann_transport_equation_solver::AnalyticalSolution::test_id_set(2);
 	linear_boltzmann_transport_equation_solver::Mesh mesh(
 		pd.nx(), pd.ny(), pd.nz(), pd.h(), pd.xc(), pd.yc(), pd.zc());
+	std::cout << "mesh start" << std::endl;
 	mesh.generate();
 	mesh.cache_sweep_order();
+	std::cout << "init start" << std::endl;
 	linear_boltzmann_transport_equation_solver::SolverMultiAngle solver(pd, mesh);
-	solver.SolveAnalyticalByDirect();
+	std::cout << "init finished" << std::endl;
+	solver.SolveAnalyticalBySolve();
 	solver.SaveSolution("result.mat","u");
+	//solver.SolveAnalyticalByDirect();
+	//solver.SaveSolution("result.mat", "ustd");
+	std::cout << "solve finished" << std::endl;
 	std::ofstream fout("result.txt");
 	fout << "scattering matrix:" << std::endl << solver.scattering_matrix();
 	fout << "mu:" << std::endl << solver.mu();

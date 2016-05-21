@@ -16,6 +16,7 @@ void linear_boltzmann_transport_equation_solver::MemoryManager::alloc()
 {
 	solution_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
 	source_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
+	source_ext_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
 	boundary_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_surface_node_*na_);
 }
 
@@ -35,6 +36,8 @@ void linear_boltzmann_transport_equation_solver::MemoryManager::clear()
 		mkl_free(source_p_);
 	if (boundary_p_ != nullptr)
 		mkl_free(boundary_p_);
+	if (source_ext_p_ != nullptr)
+		mkl_free(source_ext_p_);
 }
 
 void linear_boltzmann_transport_equation_solver::MemoryManager::solution_pos_inc(const size_t ia, num_p& ptr, size_t& inc) const
