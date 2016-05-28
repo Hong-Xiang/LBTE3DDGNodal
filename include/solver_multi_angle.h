@@ -34,12 +34,12 @@ namespace linear_boltzmann_transport_equation_solver {
 		
 		const size_t iteration_number() const { return iteration_number_; }
 	private:
-		size_t nx_, ny_, nz_; //space cell of initial mesh
+		size_t nx_, ny_, nz_; //space cell of initial Mesh
 		size_t np_; // basis per dimension
 		size_t na_; // total number of angles
 		num_t sigma_; // total cross section
-		num_t h_; //cell size of initial mesh
-		num_t xc_, yc_, zc_; //center of spatial mesh
+		num_t h_; //cell size of initial Mesh
+		num_t xc_, yc_, zc_; //center of spatial Mesh
 		std::string file_scattering_matrix_;
 		std::string file_angle_info_;
 		size_t verbose_;
@@ -53,7 +53,7 @@ namespace linear_boltzmann_transport_equation_solver {
  *
  * \brief Users' interface of LBTE solver
  *
- * User should provide problem definition only. Without any details about mesh, angle or other things.
+ * User should provide problem definition only. Without any details about Mesh, angle or other things.
  * All those information are read-only by SolverMultiAngle.
  * Currently SolverMultiAngle only provide solution of mean value of voxels.
  * 
@@ -71,12 +71,12 @@ namespace linear_boltzmann_transport_equation_solver {
  */	
 	class SolverMultiAngle {
 	public:
-		SolverMultiAngle(const ProblemDefinition pd, const Mesh& mesh);
+		SolverMultiAngle(const ProblemDefinition pd, const Mesh& Mesh);
 
 		virtual ~SolverMultiAngle();
 
 	public:
-		std::vector<dgn::vector3> Center() const;
+		std::vector<vector3> Center() const;
 		
 		//Vector solution_mean_voxel() const;
 

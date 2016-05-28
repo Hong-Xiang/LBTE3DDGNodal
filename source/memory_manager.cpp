@@ -14,10 +14,10 @@ linear_boltzmann_transport_equation_solver::MemoryManager::~MemoryManager()
 
 void linear_boltzmann_transport_equation_solver::MemoryManager::alloc()
 {
-	solution_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
-	source_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
-	source_ext_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_element_node_*na_);
-	boundary_p_ = xlib::mkl_ext::xcalloc<dgn::num_t>(n_surface_node_*na_);
+	solution_p_ = xlib::mkl_ext::xcalloc<num_t>(n_element_node_*na_);
+	source_p_ = xlib::mkl_ext::xcalloc<num_t>(n_element_node_*na_);
+	source_ext_p_ = xlib::mkl_ext::xcalloc<num_t>(n_element_node_*na_);
+	boundary_p_ = xlib::mkl_ext::xcalloc<num_t>(n_surface_node_*na_);
 }
 
 

@@ -37,7 +37,7 @@ namespace linear_boltzmann_transport_equation_solver {
 		clear();
 	}
 
-	std::vector<dgn::vector3> SolverMultiAngle::Center() const
+	std::vector<vector3> SolverMultiAngle::Center() const
 	{
 		return mesh_.center();
 	}
@@ -342,9 +342,9 @@ namespace linear_boltzmann_transport_equation_solver {
 		}
 	}
 
-	SolverMultiAngle::SolverMultiAngle(const ProblemDefinition pd, const Mesh& mesh)
+	SolverMultiAngle::SolverMultiAngle(const ProblemDefinition pd, const Mesh& Mesh)
 		:	problem_definition_(pd), 
-			mesh_(mesh),
+			mesh_(Mesh),
 			memory_manager_(
 				mesh_.memory_element_total(SystemMatrixSingleAngle::basis_total(pd.np())),
 				mesh_.memory_surface_total(SystemMatrixSingleAngle::basis_lower_dim_total(pd.np())),

@@ -3,7 +3,7 @@
 
 namespace dgn {
 
-	dgn::num_t analytical_solution::solution(num_t x, num_t y, num_t z, num_t mu, num_t xi, num_t eta, num_t sigma)
+	num_t analytical_solution::solution(num_t x, num_t y, num_t z, num_t mu, num_t xi, num_t eta, num_t sigma)
 	{
 		num_t ans = 0;
 		num_t r2 = 0.0;
@@ -37,7 +37,7 @@ namespace dgn {
 		return ans;
 	}
 
-	dgn::num_t analytical_solution::source(num_t x, num_t y, num_t z, num_t mu, num_t xi, num_t eta, num_t sigma)
+	num_t analytical_solution::source(num_t x, num_t y, num_t z, num_t mu, num_t xi, num_t eta, num_t sigma)
 	{
 		num_t ans = 0.0;
 		num_t r2 = 0.0;

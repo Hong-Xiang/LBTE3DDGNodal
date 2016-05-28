@@ -2,9 +2,7 @@ cmake_minimum_required (VERSION 3.0)
 project (LBTE3DDGNodal)
 
 #========Add Libraries:=========================#
-
 get_filename_component(CMAKE_MY_MODULE $ENV{USERPROFILE}/OneDrive/Template/cmake_modules ABSOLUTE)
-get_filename_component(XLIB_PATH $ENV{USERPROFILE}/OneDrive/xlib ABSOLUTE)
 set(CMAKE_MODULE_PATH "${CMAKE_MY_MODULE}")
 set(LIBS)
 find_package(MKL)
@@ -20,8 +18,14 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(LIBS ${Boost_LIBRARIES} ${LIBS})
 link_directories(${Boost_LIBRARY_DIRS})
 
-include_directories(${XLIB_PATH}//include)
-find_library(XLib_LIB xlib ${XLIB_PATH}//release//lib)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../lib/include)
+set(XLib_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../lib)
+if(${CMAKE_CFG_INTDIR} STREQUAL "Debug")
+    set(XLib_PATH ${XLib_PATH}/debug)
+else(${CMAKE_CFG_INTDIR} STREQUAL "Debug")
+    set(XLib_PATH ${XLib_PATH}/release)
+endif(${CMAKE_CFG_INTDIR} STREQUAL "Debug")
+find_library(XLib_LIB xlib ${XLib_PATH})
 set(LIBS ${XLib_LIB} ${LIBS})
 
 #================================================#
@@ -33,6 +37,7 @@ set(LIBS ${XLib_LIB} ${LIBS})
 add_compile_options(/Qopenmp)
 #add_compile_options(/DMKL_DIRECT_CALL)
 add_compile_options(/DUSE_DOUBLE_PRECISION)
+add_compile_options(/EHsc)
 #================================================#
 
 #========Add source files:=======================#
@@ -53,4 +58,7 @@ message(STATUS "Sources: ${SOURCEFILES}")
 add_executable(${PROJECT_NAME} ${PROJECT_NAME}.cpp ${SOURCEFILES} ${HEADERFILES})
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS true)
+add_library(lib${PROJECT_NAME} SHARED ${SOURCEFILES} ${HEADERFILES})
+target_link_libraries(lib${PROJECT_NAME} ${LIBS})
 #================================================#

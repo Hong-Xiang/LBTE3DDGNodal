@@ -1,98 +1,117 @@
 #pragma once
-#include "types.h"
+#include <memory>
+#include "global.h"
 #include "system_matrices.h"
 #include "mesh.h"
-#include "globals.h"
+#include "source.h"
+#include "boundary.h"
+#include "solution.h"
 
-namespace dgn {	
-	class source_generator {
-	public:
-		source_generator(const system_matrix_angle& s, const mesh& m);
-		~source_generator();
+namespace discontinues_galerkin_nodal_solver {	
+  enum class SolverStatus {
+    PreInit = 0,
+    PostInit = 1,
+    Closed = 2,
+    OutputReady = 3
+  };
+  class SolverBase {
+  public:
+    SolverBase();
+    SolverStatus status() const { return status_; }
+    void status_set(SolverStatus ss);
+    virtual void Procceed() = 0;
+    virtual void Initialization() = 0;
+    virtual void SetCondition() = 0;
+    virtual void Solve() = 0;
+  private:
+    SolverStatus status_;
+  };
 
-		const vector_t x() const { return x_; }
-		const vector_t y() const { return y_; }
-		const vector_t z() const { return z_; }
+  class SolverSingleAngle : public SolverBase{
+  public:
+    SolverSingleAngle(const MeshWithCoordinate& mesh, 
+          std::string input_file_name = "input.txt");  
+    SolverSingleAngle(const MeshWithCoordinate& mesh,
+          const Vector& source_ext, const Vector& boundary_ext,
+          std::string input_file_name = "input.txt");
+    virtual void Procceed() override;
+    virtual void Initialization() override;
+    virtual void SetCondition() override;
+    virtual void Solve() override;
+    Vector solution() const { return solution_->Value(); }
+    Vector xe() const { return mesh_.xe(); }
+    Vector ye() const { return mesh_.ye(); }
+    Vector ze() const { return mesh_.ze(); }
+    Vector xs() const { return mesh_.xs(); }
+    Vector ys() const { return mesh_.ys(); }
+    Vector zs() const { return mesh_.zs(); }
+    num_t mu() const { return system_->mu(); }
+    num_t xi() const { return system_->xi(); }
+    num_t eta() const { return system_->eta(); }
+    num_t sigma() const { return system_->sigma(); }
+  private:
+    const MeshWithCoordinate& mesh_;
+    ProblemDefinitionSingleAngle problem_definition_;
+    std::shared_ptr<SystemMatrix> system_;
+    std::shared_ptr<Source> source_;
+    std::shared_ptr<Boundary> boundary_;
+    std::shared_ptr<Solution> solution_; 
+    Vector source_ext_, boundary_ext_;
+    bool is_test_;
+  };
 
-		void calculate(vector_t& data) const;
-	private:
-		const system_matrix_angle* s_;
-		const mesh* m_;
-		void calculate_coordinates();
-		vector_t x_, y_, z_;
-		num_p xp_, yp_, zp_;
-	};
+	//class solver {
+	//public:
+	//	static const size_t total_node_element(const Mesh& m, size_t np);
+	//	static const size_t total_node_surface(const Mesh& m, size_t np);
 
-	class boundary_generator {
-	public:
-		boundary_generator(const system_matrix_angle& s, const mesh& m);
-		~boundary_generator();
+	//	const size_t total_node_element() const;
+	//	const size_t total_node_surface() const;
+	//public:
+	//	solver(const system_matrix_angle& s, const Mesh& m);		
+	//	~solver();
+	//	//void source_set(vector_t s);
+	//	//void boudnary_set(vector_t b);
+	//	//vector_t source_get() const;
+	//	//vector_t boudnary_get() const;
 
-		const vector_t x() const { return x_; }
-		const vector_t y() const { return y_; }
-		const vector_t z() const { return z_; }
+	//	void solve();
 
-		void calculate(vector_t data) const;
-	private:
-		vector_t x_, y_, z_;
-		num_p xp_, yp_, zp_;
-		const system_matrix_angle* s_;
-		const mesh* m_;
-		void calculate_coordinates();
-	};
+	//	void solve_test(size_t id);
+	//	
+	//	void solve_analytical(size_t id);
 
-	class solver {
-	public:
-		static const size_t total_node_element(const mesh& m, size_t np);
-		static const size_t total_node_surface(const mesh& m, size_t np);
+	//	num_p boundary_ptr() const { return boundary_p_; }
+	//	num_p source_ptr() const { return source_p_; }
+	//	num_p solution_ptr() const { return solution_p_; }
 
-		const size_t total_node_element() const;
-		const size_t total_node_surface() const;
-	public:
-		solver(const system_matrix_angle& s, const mesh& m);		
-		~solver();
-		//void source_set(vector_t s);
-		//void boudnary_set(vector_t b);
-		//vector_t source_get() const;
-		//vector_t boudnary_get() const;
+	//	vector_t x() const { return sg_.x(); }
+	//	vector_t y() const { return sg_.y(); }
+	//	vector_t z() const { return sg_.z(); }
+	//	vector_t solution() const { return solution_; }
+	//	vector_t x_b() const { return bg_.x(); }
+	//	vector_t y_b() const { return bg_.y(); }
+	//	vector_t z_b() const { return bg_.z(); }
+	//	void solution_mean(vector_t data) const;
 
-		void solve();
+	//	size_t memory_total_solution() const {
+	//		return m_->memory_element_total(s_->basis_element());
+	//	}
+	//private:
+	//	source_generator sg_;
+	//	boundary_generator bg_;
+	//	num_p source_p_;
+	//	num_p boundary_p_;
+	//	num_p solution_p_;
+	//	num_p boundary_mask_p_;
 
-		void solve_test(size_t id);
-		
-		void solve_analytical(size_t id);
+	//	vector_t source_;
+	//	vector_t boundary_;
+	//	vector_t solution_;
+	//	vector_t boundary_mask_;
+	//	const system_matrix_angle* s_;
+	//	const Mesh* m_;
 
-		num_p boundary_ptr() const { return boundary_p_; }
-		num_p source_ptr() const { return source_p_; }
-		num_p solution_ptr() const { return solution_p_; }
-
-		vector_t x() const { return sg_.x(); }
-		vector_t y() const { return sg_.y(); }
-		vector_t z() const { return sg_.z(); }
-		vector_t solution() const { return solution_; }
-		vector_t x_b() const { return bg_.x(); }
-		vector_t y_b() const { return bg_.y(); }
-		vector_t z_b() const { return bg_.z(); }
-		void solution_mean(vector_t data) const;
-
-		size_t memory_total_solution() const {
-			return m_->memory_element_total(s_->basis_element());
-		}
-	private:
-		source_generator sg_;
-		boundary_generator bg_;
-		num_p source_p_;
-		num_p boundary_p_;
-		num_p solution_p_;
-		num_p boundary_mask_p_;
-
-		vector_t source_;
-		vector_t boundary_;
-		vector_t solution_;
-		vector_t boundary_mask_;
-		const system_matrix_angle* s_;
-		const mesh* m_;
-
-	};
+	//};
 
 }

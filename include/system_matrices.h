@@ -1,254 +1,89 @@
 #pragma once
 #include "types.h"
-namespace dgn {
-	class invalid_dimension : public std::exception {};
-	/*!
-	 * \class matrices_data
-	 *
-	 * \brief Provide matrices related data for 1D standard element. Support up to 20 order.
-	 *		  Singleton pattern, use instance() method to handle it.
-	 *
-	 * \author HongXiang
-	 * \date May 2016
-	 */
-	class matrices_data {
-	public:
-		static const matrices_data& instance();
-		const vector_t x(size_t np) const;
-		const matrix_t m(size_t np) const;
-		const matrix_t s(size_t np) const;		
-	private:
-		matrices_data();
-		void read_MAT_files();
-		static matrices_data* handle_;
-		std::vector<num_p> x_;
-		std::vector<num_p> s_;
-		std::vector<num_p> m_;
+#include "matrices.h"
 
-	private:
-		const size_t MINNP = 2;
-		const size_t MAXNP = 20;
-		
-	};
+namespace discontinues_galerkin_nodal_solver {
+    
+  class SystemMatrix {
+  private:
+    static size_t n_basis(size_t np) {
+      return Matrices3D::n_basis(np);
+    }
+    static size_t n_basis_low(size_t np) {
+      return Matrices3D::n_basis_lower(np);
+    }
+  public:
+    SystemMatrix(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma);
+    const Matrix system_matrix() const { return sysm_; }
+    const MatrixLu system_matrixlu() const { return sysmlu_; }
+    const Matrix system_matrixiv() const { return sysmiv_; }
+    const Matrix mass_matrix() const { return massm_; }
+    const Matrix lift_matrix(SurfaceElementRelation dir) const {
+      return lift_matrix_.at(Utilities::id(dir));
+    }
+    const Matrix flux_matrix(SurfaceElementRelation dir) const {
+      return flux_matrix_.at(Utilities::id(dir));
+    }
+    const Vector& xe() const { return x_e_; }
+    const Vector& ye() const { return y_e_; }
+    const Vector& ze() const { return z_e_; }
 
-	class matrices_base {
-	public:
+    const Vector& xs(SurfaceElementRelation ser) const {
+      return x_s_.at(Utilities::id(ser));
+    }
+    const Vector& ys(SurfaceElementRelation ser) const {
+      return y_s_.at(Utilities::id(ser));
+    }
+    const Vector& zs(SurfaceElementRelation ser) const {
+      return z_s_.at(Utilities::id(ser));
+    }
 
-		matrices_base(num_t h, size_t np);
-		void reset(num_t h, size_t np);
-		virtual const size_t basis_total() const = 0;
-		virtual const size_t basis_lower_dim_total() const = 0;
+    const Vector& xs(SurfaceDirection sd) const {
+      return x_s3_.at(Utilities::id(sd));
+    }
 
-		const matrix_t lift_matrix(interface_direction idr) const { return lift_matrices_.at(static_cast<size_t>(idr)); }
-		const matrix_t flux_matrix(interface_direction idr) const { return flux_matrices_.at(static_cast<size_t>(idr)); }
+    const Vector& ys(SurfaceDirection sd) const {
+      return y_s3_.at(Utilities::id(sd));
+    }
 
-		void initialize();
+    const Vector& zs(SurfaceDirection sd) const {
+      return z_s3_.at(Utilities::id(sd));
+    }
 
-		virtual size_t dimension() const { 
-			//throw(invalid_dimension());
-			return 0; 
-		}
-		virtual ~matrices_base();
-	protected:
-		virtual void calculate() = 0;
-		virtual void memory_alloc();
-	
-	protected:
-		num_t h_;
-		size_t np_;
+    const size_t np() const { return np_; }
+    num_t mu() const { return mu_; }
+    num_t xi() const { return xi_; }
+    num_t eta() const { return eta_; }
+    num_t sigma() const { return sigma_; }
+    num_t h() const { return h_; }
 
-		std::vector<num_p> lift_matrices_ptr_;
-		std::vector<num_p> flux_matrices_ptr_;
-		std::vector<matrix_t> lift_matrices_;
-		std::vector<matrix_t> flux_matrices_;
+    size_t n_basis_element() const { return n_basis_element_; }
+    size_t n_basis_surface() const { return n_basis_surface_; }
+    ~SystemMatrix();
+  private:
+    void CalculateMatrix();
+    void CalculateCoordinates();
+  private:
+    num_t h_, mu_, xi_, eta_, sigma_;
+    size_t np_;
 
-		size_t dim_;
-		bool is_init_;
-	};
+    //Matrices3D matrices_;
+    //Matrices2D surface_matrices_;
 
-	class matrices1d : public matrices_base {
-	public:
-		static size_t basis_total(size_t np) {
-			return np;
-		}
-		static size_t basis_lower_dim_total(size_t np) {
-			return 1;
-		}
-	public:
-		
-		matrices1d(num_t h, size_t np);
-		const vector_t x() const { return x_; }
-		const matrix_t m() const { return m_; }
-		const matrix_t s() const { return s_; }
-		virtual const size_t basis_total() const { return basis_total(np_); }
-		virtual const size_t basis_lower_dim_total() const { return basis_lower_dim_total(np_); }
-		virtual size_t dimension() const { return 1; }
-		~matrices1d();
-	protected:
-		virtual void calculate();
-		virtual void memory_alloc();
+    Matrix sysm_;
+    MatrixLu sysmlu_;
+    Matrix sysmiv_;
+    Matrix massm_;
+    std::vector<Matrix> lift_matrix_;
+    std::vector<Matrix> flux_matrix_;
 
-	private:
-		num_p xp_;
-		num_p mp_;
-		num_p sp_;		
+    size_t n_basis_element_;
+    size_t n_basis_surface_;
 
+    Vector x_e_, y_e_, z_e_;
+    std::vector<Vector> x_s_, y_s_, z_s_;
+    std::vector<Vector> x_s3_, y_s3_, z_s3_;
 
-		vector_t x_;
-		matrix_t m_;
-		matrix_t s_;
-	};
-
-
-	class matrices2d : public matrices_base {
-	public:
-		static size_t basis_total(size_t np) {
-			return np*np;
-		}
-		static size_t basis_lower_dim_total(size_t np) {
-			return np;
-		}
-	public:
-		matrices2d(num_t h, size_t np);
-		const size_t basis_total() const { return np_*np_; }
-		virtual const size_t basis_lower_dim_total() const { return np_; }
-		virtual size_t dimension() const { return 2; }
-		~matrices2d();
-	protected:
-		virtual void calculate();
-		virtual void memory_alloc();
-	public:
-		const vector_t x() const { return x_; }
-		const vector_t y() const { return y_; }
-		const matrix_t m() const { return m_; }
-		const matrix_t sx() const { return sx_; }
-		const matrix_t sy() const { return sy_; } 		
-	private:
-		num_p xp_;
-		num_p yp_;
-		num_p mp_;
-		num_p sxp_;
-		num_p syp_;
-
-		vector_t x_;
-		vector_t y_;
-		matrix_t m_;
-		matrix_t sx_;
-		matrix_t sy_;
-	};
-
-	class matrices3d : public matrices_base {
-	public:
-		static size_t basis_total(size_t np) {
-			return np*np*np;
-		}
-		static size_t basis_lower_dim_total(size_t np) {
-			return np*np;
-		}
-	public:
-		matrices3d(num_t h, size_t np);
-		virtual const size_t basis_total() const { return np_*np_*np_; }
-		virtual const size_t basis_lower_dim_total() const { return np_*np_; }
-		virtual size_t dimension() const { return 3; }
-		~matrices3d();
-	protected:
-		virtual void calculate();
-		virtual void memory_alloc();
-	public:
-		const vector_t x() const { return x_; }
-		const vector_t y() const { return y_; }
-		const vector_t z() const { return z_; }
-		const matrix_t m() const { return m_; }
-		const matrix_t sx() const { return sx_; }
-		const matrix_t sy() const { return sy_; }
-		const matrix_t sz() const { return sz_; }
-	private:
-		num_p xp_;
-		num_p yp_;
-		num_p zp_;
-		num_p mp_;
-		num_p sxp_;
-		num_p syp_;
-		num_p szp_;		
-
-
-		vector_t x_;
-		vector_t y_;
-		vector_t z_;
-		matrix_t m_;
-		matrix_t sx_;
-		matrix_t sy_;
-		matrix_t sz_;
-	};
-
-	class system_matrix_angle {			
-	public:
-		static size_t basis_total(size_t np) {
-			return matrices3d::basis_total(np);
-		}
-		static size_t basis_lower_dim_total(size_t np) {
-			return matrices3d::basis_lower_dim_total(np);
-		}
-	public:
-		system_matrix_angle(num_t h, size_t np, num_t mu, num_t xi, num_t eta, num_t sigma);
-		const matrix_t system_matrix() const { return sysm_; }
-		const xlib::mkl_ext::matrix_lu<num_t> system_matrixlu() const { return sysmlu_; }
-		const matrix_t system_matrixiv() const { return sysmiv_; }
-		const matrix_t mass_matrix() const { return massm_; }
-		const matrix_t lift_matrix(interface_direction dir) const {
-			return lift_matrix_.at(static_cast<size_t>(dir));
-		}
-		const matrix_t reorder() const {
-			return reorder_;
-		}
-		
-		const matrix_t back_order() const {
-			return back_order_;
-		}
-		const matrix_t flux_matrix(interface_direction dir) const {
-			return flux_matrix_.at(static_cast<size_t>(dir));
-		}
-		const vector_t x() const { return matrices_.x(); }
-		const vector_t y() const { return matrices_.y(); }
-		const vector_t z() const { return matrices_.z(); }
-
-		const vector_t xs() const { return surface_matrices_.x(); }
-		const vector_t ys() const { return surface_matrices_.y(); }
-
-		const size_t np() const { return np_; }
-		num_t mu() const { return mu_; }
-		num_t xi() const { return xi_; }
-		num_t eta() const { return eta_; }
-		num_t sigma() const { return sigma_; }
-
-		size_t basis_element() const { return matrices_.basis_total(); }
-		size_t basis_surface() const { return matrices_.basis_lower_dim_total(); }
-		~system_matrix_angle();
-	private:
-		matrices3d matrices_;
-		matrices2d surface_matrices_;
-		num_t h_, mu_, xi_, eta_, sigma_;
-		size_t np_;
-		num_p sysmp_;
-		matrix_t sysm_;
-		
-		num_p sysmlup_;
-		xlib::mkl_ext::matrix_lu<num_t> sysmlu_;
-		lapack_int* ipiv;
-
-		num_p sysmivp_;
-		matrix_t sysmiv_;
-		num_p massmp_;
-		matrix_t massm_;
-		std::vector<num_p> lift_matrix_p_;
-		std::vector<num_p> flux_matrix_p_;
-		std::vector<matrix_t> lift_matrix_;
-		std::vector<matrix_t> flux_matrix_;		
-
-		num_p reorder_p_;
-		matrix_t reorder_;
-		num_p back_order_p_;
-		matrix_t back_order_;
-	};
-	std::ostream& operator<<(std::ostream& os , const system_matrix_angle& s);
+  };
+  std::ostream& operator<<(std::ostream& os, const SystemMatrix& s);
 }
